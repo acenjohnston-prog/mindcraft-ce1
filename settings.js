@@ -1,88 +1,74 @@
 import path from 'path';
 import fs from 'fs';
-const settings = {
-  "minecraft_version": "1.21.4", // supports up to 1.21.4
-  "host": "162.55.100.208", // or "localhost", "your.ip.address.here"
-  "port": 25536,
-  "auth": "offline", // or "microsoft"
 
-  // the mindserver manages all agents and hosts the UI
-  "host_mindserver": true, // if true, the mindserver will be hosted on this machine. otherwise, specify a public IP address
+const settings = {
+  "minecraft_version": "1.21.4", 
+  "host": "162.55.100.208", 
+  "port": 25536,
+  "auth": "offline", 
+
+  // CHANGED FOR RENDER: Render Background Workers cannot host accessible UI ports.
+  // If you need the Mindserver UI dashboard, you must deploy as a Render "Web Service" instead.
+  "host_mindserver": false, 
   "mindserver_host": "localhost",
   "mindserver_port": 8080,
 
-  // the base profile is shared by all bots for default prompts/examples/modes
-  "base_profile": "./profiles/defaults/_default.json", // also see creative.json, god_mode.json, and personality.json is really fun.
+  "base_profile": "./profiles/defaults/_default.json", 
   "profiles": [
     "./andy.json",
-    // "./profiles/gpt.json",
-    // "./profiles/claude.json",
-    // "./profiles/gemini.json",
-    // "./profiles/llama.json",
-    // "./profiles/qwen.json",
-    // "./profiles/grok.json",
-    // "./profiles/mistral.json",
-    // "./profiles/deepseek.json",
-    // "./profiles/vertex.json",
-    // "./profiles/andy-4.json",
-
-    // using more than 1 profile requires you to /msg each bot indivually
-    // individual profiles override values from the base profile
   ],
-  "plugins": [], // you can add plugins here, e.g. pre-installed plugin: "Dance"
-  "load_memory": false, // load memory from previous session
-  "init_message": "Respond with hello world and your name", // sends to all on spawn
-  "only_chat_with": [], // users that the bots listen to and send general messages to. if empty it will chat publicly
+  "plugins": [], 
+  "load_memory": false, 
+  "init_message": "Respond with hello world and your name", 
+  "only_chat_with": [], 
 
-  "language": "en", // translate to/from this language. NOT text-to-speech language. Supports these language names: https://cloud.google.com/translate/docs/languages
-  "show_bot_views": false, // show bot's view in browser at localhost:3000, 3001...
+  "language": "en", 
+  "show_bot_views": false, // Keep false (Render has no display screen)
 
-  "allow_insecure_coding": false, // allows newAction command and model can write/run code on your computer. enable at own risk
-  "allow_vision": false, // allows vision model to interpret screenshots as inputs
-  "vision_mode": "prompted", // "off", "prompted", or "always"
-  "blocked_actions": ["!checkBlueprint", "!checkBlueprintLevel", "!getBlueprint", "!getBlueprintLevel"], // commands to disable and remove from docs. Ex: ["!setMode"]
-  "code_timeout_mins": -1, // minutes code is allowed to run. -1 for no timeout
-  "relevant_docs_count": 5, // number of relevant code function docs to select for prompting. -1 for all
+  "allow_insecure_coding": false, 
+  "allow_vision": false, 
+  "vision_mode": "prompted", 
+  "blocked_actions": ["!checkBlueprint", "!checkBlueprintLevel", "!getBlueprint", "!getBlueprintLevel"], 
+  "code_timeout_mins": -1, 
+  "relevant_docs_count": 5, 
 
-  "max_messages": 15, // max number of messages to keep in context
-  "num_examples": 2, // number of examples to give to the model
-  "max_commands": -1, // max number of commands that can be used in consecutive responses. -1 for no limit
-  "verbose_commands": true, // show full command syntax
-  "narrate_behavior": true, // chat simple automatic actions ('Picking up item!')
-  "chat_bot_messages": true, // publicly chat messages to other bots
+  "max_messages": 15, 
+  "num_examples": 2, 
+  "max_commands": -1, 
+  "verbose_commands": true, 
+  "narrate_behavior": true, 
+  "chat_bot_messages": true, 
 
   "auto_idle_trigger": {
     "enabled": false,
-    "timeout_secs": 120, // 10 seconds inactivity before prompting
+    "timeout_secs": 120, 
     "message": "Keep doing stuff!"
   },
 
-  "speak": true,
-  // allows all bots to speak through text-to-speech. format: {provider}/{model}/{voice}. if set to "system" it will use system text-to-speech, which works on windows and mac, but on linux you need to `apt install espeak`.
-  // specify speech model inside each profile - so that you can have each bot with different voices ;)
+  // CRITICAL CHANGE FOR RENDER: Turn this FALSE. 
+  // Render's Linux environment does not have "espeak" installed. Leaving this true will crash the bot.
+  "speak": false, 
 
-  "stt_transcription": false, // enable speech-to-text transcription
-  "stt_provider": "pollinations", // STT provider: "groq" (requires API key) or "pollinations" (free)
-  "stt_username": "SERVER", // username for STT messages
-  "stt_agent_name": "", // agent name for STT messages, if empty it will send the STT to all bots
+  "stt_transcription": false, 
+  "stt_provider": "pollinations", 
+  "stt_username": "SERVER", 
+  "stt_agent_name": "", 
 
-  // STT Audio Detection Settings
-  "stt_rms_threshold": 3000,       // Raised from 1000 to reduce false triggers
-  "stt_silence_duration": 2000,   // 2 seconds of silence before stopping
-  "stt_min_audio_duration": 0.5,  // Minimum audio duration in seconds
-  "stt_max_audio_duration": 45,   // Maximum audio duration in seconds
-  "stt_debug_audio": true,        // Enable to see what's happening
-  "stt_cooldown_ms": 2000,        // Minimum time between recordings
-  "stt_speech_threshold_ratio": 0.05, // Much lower - 5% instead of 15%
-  "stt_consecutive_speech_samples": 3, // Reduced from 5 to 3
+  "stt_rms_threshold": 3000,       
+  "stt_silence_duration": 2000,   
+  "stt_min_audio_duration": 0.5,  
+  "stt_max_audio_duration": 45,   
+  "stt_debug_audio": true,        
+  "stt_cooldown_ms": 2000,        
+  "stt_speech_threshold_ratio": 0.05, 
+  "stt_consecutive_speech_samples": 3, 
 
-  "log_normal_data": false, // Logs all inputs / outputs without reasoning or vision data
-  "log_reasoning_data": false, // Logs only reasoning inputs / outputs
-  "log_vision_data": false, // Logs only vision inputs / outputs
-
+  "log_normal_data": false, 
+  "log_reasoning_data": false, 
+  "log_vision_data": false, 
 }
 
-// these environment variables override certain settings
+// Environment variable overrides engine (Leave this intact)
 if (process.env.SETTINGS_PATH) {
   try {
     const cfgPath = path.resolve(process.env.SETTINGS_PATH);
